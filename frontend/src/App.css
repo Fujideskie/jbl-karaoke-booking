@@ -1384,3 +1384,78 @@ button[type="submit"]:disabled {
     padding: 0px 2px;
   }
 }
+/* Push Notification Toggle */
+.push-toggle {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 20px;
+  background: #f8f6ff;
+  border-bottom: 1px solid #e8e4f0;
+  gap: 10px;
+}
+
+.push-toggle-info {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+.push-toggle-label {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #2d1b69;
+  margin-bottom: 2px;
+}
+
+.push-toggle-desc {
+  font-size: 0.7rem;
+  color: #777;
+}
+
+.push-toggle-btn {
+  padding: 6px 16px;
+  border: 2px solid #2d1b69;
+  background: white;
+  color: #2d1b69;
+  font-weight: 700;
+  font-size: 0.75rem;
+  border-radius: 20px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-width: 60px;
+}
+
+.push-toggle-btn:hover {
+  background: #f0edf7;
+}
+
+.push-toggle-btn.active {
+  background: #2d1b69;
+  color: white;
+}
+
+.push-toggle-btn.active:hover {
+  background: #1f1247;
+}
+
+/* Mobile adjustments */
+@media (max-width: 768px) {
+  .push-toggle {
+    padding: 10px 14px;
+  }
+
+  .push-toggle-label {
+    font-size: 0.75rem;
+  }
+
+  .push-toggle-desc {
+    font-size: 0.65rem;
+  }
+
+  .push-toggle-btn {
+    padding: 5px 12px;
+    font-size: 0.7rem;
+    min-width: 50px;
+  }
+}

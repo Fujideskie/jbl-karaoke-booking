@@ -1,13 +1,17 @@
 import React, { useState, useEffect } from 'react';
+import { subscribeToPush, isSubscribed, unsubscribeFromPush, isPushSupported } from '../pushNotification';
 
 function NotificationBell() {
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [isOpen, setIsOpen] = useState(false);
+  const [pushEnabled, setPushEnabled] = useState(false);
+  const [pushSupported, setPushSupported] = useState(false);
 
   useEffect(() => {
     fetchNotifications();
     fetchUnreadCount();
+    checkPushStatus();
 
     const interval = setInterval(() => {
       fetchNotifications();
@@ -16,6 +20,16 @@ function NotificationBell() {
 
     return () => clearInterval(interval);
   }, []);
+
+  const checkPushStatus = async () => {
+    const supported = isPushSupported();
+    setPushSupported(supported);
+    
+    if (supported) {
+      const subscribed = await isSubscribed();
+      setPushEnabled(subscribed);
+    }
+  };
 
   const fetchNotifications = async () => {
     try {
@@ -34,6 +48,24 @@ function NotificationBell() {
       setUnreadCount(data.count);
     } catch (error) {
       console.error('Error fetching unread count:', error);
+    }
+  };
+
+  const handlePushToggle = async () => {
+    if (pushEnabled) {
+      const result = await unsubscribeFromPush();
+      if (result.success) {
+        setPushEnabled(false);
+        alert('🔕 Push notifications disabled');
+      }
+    } else {
+      const result = await subscribeToPush();
+      if (result.success) {
+        setPushEnabled(true);
+        alert('🔔 Push notifications enabled! Makakatanggap ka na ng notification kahit sarado ang app.');
+      } else {
+        alert(`❌ ${result.error}`);
+      }
     }
   };
 
@@ -101,38 +133,60 @@ function NotificationBell() {
 
       {isOpen && (
         <div className="notification-dropdown">
-  <div className="notification-header">
-    <span>📬 Notifications</span>
-    {unreadCount > 0 && (
-      <button className="mark-all-read" onClick={markAllAsRead}>
-        Mark all read
-      </button>
-    )}
-  </div>
-  
-  <div className="notification-list">
-    {notifications.length === 0 ? (
-      <div className="notification-empty">No new notifications</div>
-    ) : (
-      notifications.slice(0, 10).map((notif) => (
-        <div 
-          key={notif.id} 
-          className={`notification-item ${notif.is_read ? 'read' : 'unread'}`}
-          onClick={() => markAsRead(notif.id)}
-        >
-          <div className="notification-icon">
-            {getNotificationIcon(notif.type)}
+          <div className="notification-header">
+            <span>Notifications</span>
+            {unreadCount > 0 && (
+              <button className="mark-all-read" onClick={markAllAsRead}>
+                Mark all as read
+              </button>
+            )}
           </div>
-          <div className="notification-content">
-            <div className="notification-message">{notif.message}</div>
-            <div className="notification-time">{formatTime(notif.created_at)}</div>
+
+          {/* Push Notification Toggle */}
+          {pushSupported && (
+            <div className="push-toggle">
+              <div className="push-toggle-info">
+                <span className="push-toggle-label">
+                  {pushEnabled ? '🔔 Push Notifications ON' : '🔕 Push Notifications OFF'}
+                </span>
+                <span className="push-toggle-desc">
+                  {pushEnabled 
+                    ? 'Makakatanggap ka ng notif kahit sarado ang app' 
+                    : 'I-enable para makatanggap ng notif'}
+                </span>
+              </div>
+              <button 
+                className={`push-toggle-btn ${pushEnabled ? 'active' : ''}`}
+                onClick={handlePushToggle}
+              >
+                {pushEnabled ? 'ON' : 'OFF'}
+              </button>
+            </div>
+          )}
+          
+          <div className="notification-list">
+            {notifications.length === 0 ? (
+              <div className="notification-empty">No notifications</div>
+            ) : (
+              notifications.map((notif) => (
+                <div 
+                  key={notif.id} 
+                  className={`notification-item ${notif.is_read ? 'read' : 'unread'}`}
+                  onClick={() => markAsRead(notif.id)}
+                >
+                  <div className="notification-icon">
+                    {getNotificationIcon(notif.type)}
+                  </div>
+                  <div className="notification-content">
+                    <div className="notification-message">{notif.message}</div>
+                    <div className="notification-time">{formatTime(notif.created_at)}</div>
+                  </div>
+                  {!notif.is_read && <div className="notification-dot"></div>}
+                </div>
+              ))
+            )}
           </div>
-          {!notif.is_read && <div className="notification-dot"></div>}
         </div>
-      ))
-    )}
-  </div>
-</div>
       )}
     </div>
   );
