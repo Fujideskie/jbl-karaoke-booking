@@ -5,17 +5,29 @@ import bookingRoutes from './routes/bookings.js';
 import dashboardRoutes from './routes/dashboard.js';
 import historyRoutes from './routes/history.js';
 import notificationRoutes from './routes/notifications.js';
+import pushRoutes from './routes/push.js';
 
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// CORS - allow all origins for testing
 app.use(cors({
   origin: '*'
 }));
 app.use(express.json());
 
-// TEMPORARY ROUTE - DELETE ALL DATA (POST method)
+// Routes
+app.use('/api/bookings', bookingRoutes);
+app.use('/api/dashboard', dashboardRoutes);
+app.use('/api/history', historyRoutes);
+app.use('/api/notifications', notificationRoutes);
+app.use('/api/push', pushRoutes);
+
+// Test route
+app.get('/api/test', (req, res) => {
+  res.json({ message: '🎤 JBL Karaoke API is running!' });
+});
+
+// TEMPORARY ROUTE - DELETE ALL DATA
 app.post('/api/delete-all', async (req, res) => {
   try {
     const db = getDb();
@@ -30,17 +42,6 @@ app.post('/api/delete-all', async (req, res) => {
   }
 });
 
-// Routes
-app.use('/api/bookings', bookingRoutes);
-app.use('/api/dashboard', dashboardRoutes);
-app.use('/api/history', historyRoutes);
-app.use('/api/notifications', notificationRoutes);
-
-// Test route
-app.get('/api/test', (req, res) => {
-  res.json({ message: '🎤 JBL Karaoke API is running!' });
-});
-
 // Start server
 async function startServer() {
   try {
@@ -48,7 +49,7 @@ async function startServer() {
     
     app.listen(PORT, () => {
       console.log(`🚀 Server running on port ${PORT}`);
-      console.log(`📍 Delete all data: POST /api/delete-all`);
+      console.log(`📍 Push routes: /api/push`);
     });
   } catch (error) {
     console.error('Failed to start server:', error);
