@@ -1,6 +1,9 @@
-import React from 'react';
+import React, { useState } from 'react';
+import RescheduleModal from './RescheduleModal';
 
-function Dashboard({ dashboardData, onRefresh }) {
+function Dashboard({ dashboardData, onRefresh, onReschedule }) {
+  const [rescheduleBooking, setRescheduleBooking] = useState(null);
+
   if (!dashboardData) {
     return <div className="loading">Loading dashboard...</div>;
   }
@@ -22,6 +25,16 @@ function Dashboard({ dashboardData, onRefresh }) {
       return ` (ends ${formatDate(booking.end_date)})`;
     }
     return '';
+  };
+
+  const handleRescheduleClick = (booking) => {
+    setRescheduleBooking(booking);
+  };
+
+  const handleRescheduleConfirm = async (id, data) => {
+    await onReschedule(id, data);
+    setRescheduleBooking(null);
+    onRefresh();
   };
 
   return (
@@ -78,6 +91,14 @@ function Dashboard({ dashboardData, onRefresh }) {
                   <div>{booking.address}</div>
                   <div>₱{booking.total_price}</div>
                 </div>
+                <div className="booking-actions">
+                  <button 
+                    className="action-btn reschedule"
+                    onClick={() => handleRescheduleClick(booking)}
+                  >
+                    🔄 Reschedule
+                  </button>
+                </div>
               </div>
             ))
           )}
@@ -101,6 +122,14 @@ function Dashboard({ dashboardData, onRefresh }) {
                   </div>
                   <div>{booking.address}</div>
                   <div>₱{booking.total_price}</div>
+                </div>
+                <div className="booking-actions">
+                  <button 
+                    className="action-btn reschedule"
+                    onClick={() => handleRescheduleClick(booking)}
+                  >
+                    🔄 Reschedule
+                  </button>
                 </div>
               </div>
             ))
@@ -126,11 +155,27 @@ function Dashboard({ dashboardData, onRefresh }) {
                   <div>{booking.address}</div>
                   <div>₱{booking.total_price}</div>
                 </div>
+                <div className="booking-actions">
+                  <button 
+                    className="action-btn reschedule"
+                    onClick={() => handleRescheduleClick(booking)}
+                  >
+                    🔄 Reschedule
+                  </button>
+                </div>
               </div>
             ))
           )}
         </div>
       </div>
+
+      {rescheduleBooking && (
+        <RescheduleModal
+          booking={rescheduleBooking}
+          onClose={() => setRescheduleBooking(null)}
+          onReschedule={handleRescheduleConfirm}
+        />
+      )}
     </div>
   );
 }

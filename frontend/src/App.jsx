@@ -1,122 +1,183 @@
-import React, { useState, useEffect } from 'react';
-import BookingForm from './components/BookingForm';
-import Dashboard from './components/Dashboard';
-import History from './components/History';
-import NotificationBell from './components/NotificationBell';
-import Calendar from './components/Calendar';
-import CancelBooking from './components/CancelBooking';
-import './App.css';
+import React, { useState } from 'react';
+import RescheduleModal from './RescheduleModal';
 
-function App() {
-  const [activeTab, setActiveTab] = useState('booking');
-  const [dashboardData, setDashboardData] = useState(null);
+function Dashboard({ dashboardData, onRefresh, onReschedule }) {
+  const [rescheduleBooking, setRescheduleBooking] = useState(null);
 
-  useEffect(() => {
-    fetchDashboard();
-  }, []);
+  if (!dashboardData) {
+    return <div className="loading">Loading dashboard...</div>;
+  }
 
-  const fetchDashboard = async () => {
-    try {
-      const response = await fetch('/api/dashboard/stats');
-      const data = await response.json();
-      setDashboardData(data);
-    } catch (error) {
-      console.error('Error fetching dashboard:', error);
-    }
+  const { today, tomorrow, upcoming, summary } = dashboardData;
+
+  const formatDate = (dateStr) => {
+    if (!dateStr) return '';
+    const date = new Date(dateStr);
+    return date.toLocaleDateString('en-PH', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric'
+    });
   };
 
-  const handleBookingSubmit = async (bookingData) => {
-    try {
-      const response = await fetch('/api/bookings', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(bookingData),
-      });
-
-      if (response.ok) {
-        const newBooking = await response.json();
-        alert('Booking submitted successfully!');
-        fetchDashboard();
-        return newBooking;
-      } else {
-        const error = await response.json();
-        alert(`Error: ${error.error}`);
-        throw new Error(error.error);
-      }
-    } catch (error) {
-      console.error('Error submitting booking:', error);
-      throw error;
+  const getEndDateDisplay = (booking) => {
+    if (booking.end_date && booking.end_date !== booking.date) {
+      return ` (ends ${formatDate(booking.end_date)})`;
     }
+    return '';
+  };
+
+  const handleRescheduleClick = (booking) => {
+    setRescheduleBooking(booking);
+  };
+
+  const handleRescheduleConfirm = async (id, data) => {
+    await onReschedule(id, data);
+    setRescheduleBooking(null);
+    onRefresh();
   };
 
   return (
-    <div className="app">
-      <header className="header">
-        <div className="header-content">
-          <div className="logo">
-            <div>
-              <h1>KL's JBL Modern Karaoke</h1>
-              <p className="subtitle">Premium Audio Experience</p>
-            </div>
-          </div>
-          <div className="header-right">
-            <nav className="nav-tabs">
-              <button 
-                className={`nav-tab ${activeTab === 'booking' ? 'active' : ''}`}
-                onClick={() => setActiveTab('booking')}
-              >
-                Book Now
-              </button>
-              <button 
-                className={`nav-tab ${activeTab === 'dashboard' ? 'active' : ''}`}
-                onClick={() => setActiveTab('dashboard')}
-              >
-                Dashboard
-              </button>
-              <button 
-                className={`nav-tab ${activeTab === 'history' ? 'active' : ''}`}
-                onClick={() => setActiveTab('history')}
-              >
-                History
-              </button>
-              <button 
-                className={`nav-tab ${activeTab === 'calendar' ? 'active' : ''}`}
-                onClick={() => setActiveTab('calendar')}
-              >
-                Calendar
-              </button>
-              <button 
-                className={`nav-tab ${activeTab === 'cancel' ? 'active' : ''}`}
-                onClick={() => setActiveTab('cancel')}
-              >
-                Cancel
-              </button>
-            </nav>
-            <NotificationBell />
+    <div className="dashboard">
+      <div className="dashboard-header">
+        <h2>Dashboard</h2>
+        <button onClick={onRefresh} className="refresh-btn">Refresh</button>
+      </div>
+
+      <div className="summary-cards">
+        <div className="summary-card total">
+          <div className="card-info">
+            <span className="card-label">Total Bookings</span>
+            <span className="card-value">{summary.totalBookings}</span>
           </div>
         </div>
-      </header>
+        <div className="summary-card income">
+          <div className="card-info">
+            <span className="card-label">This Month</span>
+            <span className="card-value">₱{summary.monthlyIncome.toLocaleString()}</span>
+          </div>
+        </div>
+        <div className="summary-card total-income">
+          <div className="card-info">
+            <span className="card-label">Total Income</span>
+            <span className="card-value">₱{summary.totalIncome.toLocaleString()}</span>
+          </div>
+        </div>
+        <div className="summary-card pending">
+          <div className="card-info">
+            <span className="card-label">Pending</span>
+            <span className="card-value">{summary.pending}</span>
+          </div>
+        </div>
+      </div>
 
-      <main className="main-content">
-        {activeTab === 'booking' && <BookingForm onSubmit={handleBookingSubmit} />}
-        {activeTab === 'dashboard' && (
-          <Dashboard 
-            dashboardData={dashboardData} 
-            onRefresh={fetchDashboard}
-          />
-        )}
-        {activeTab === 'history' && <History />}
-        {activeTab === 'calendar' && <Calendar />}
-        {activeTab === 'cancel' && <CancelBooking />}
-      </main>
+      <div className="dashboard-grid">
+        <div className="bookings-section">
+          <h3>Today's Bookings</h3>
+          {today.length === 0 ? (
+            <p className="empty-message">No active bookings for today</p>
+          ) : (
+            today.map((booking) => (
+              <div key={booking.id} className="booking-item">
+                <div className="booking-header">
+                  <span className="booking-name">#{booking.id} - {booking.name}</span>
+                  <span className="status-badge active">ACTIVE</span>
+                </div>
+                <div className="booking-details">
+                  <div>
+                    {booking.start_time} – {booking.end_time}
+                    {getEndDateDisplay(booking)}
+                  </div>
+                  <div>{booking.address}</div>
+                  <div>₱{booking.total_price}</div>
+                </div>
+                <div className="booking-actions">
+                  <button 
+                    className="action-btn reschedule"
+                    onClick={() => handleRescheduleClick(booking)}
+                  >
+                    🔄 Reschedule
+                  </button>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
 
-      <footer className="footer">
-        <p>© 2026 KL's JBL Modern Karaoke Rental • Premium Sound • Quality Service</p>
-      </footer>
+        <div className="bookings-section">
+          <h3>Tomorrow's Bookings</h3>
+          {tomorrow.length === 0 ? (
+            <p className="empty-message">No bookings for tomorrow</p>
+          ) : (
+            tomorrow.map((booking) => (
+              <div key={booking.id} className="booking-item">
+                <div className="booking-header">
+                  <span className="booking-name">#{booking.id} - {booking.name}</span>
+                  <span className="status-badge upcoming">UPCOMING</span>
+                </div>
+                <div className="booking-details">
+                  <div>
+                    {booking.start_time} – {booking.end_time}
+                    {getEndDateDisplay(booking)}
+                  </div>
+                  <div>{booking.address}</div>
+                  <div>₱{booking.total_price}</div>
+                </div>
+                <div className="booking-actions">
+                  <button 
+                    className="action-btn reschedule"
+                    onClick={() => handleRescheduleClick(booking)}
+                  >
+                    🔄 Reschedule
+                  </button>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+
+        <div className="bookings-section full-width">
+          <h3>Upcoming Bookings</h3>
+          {upcoming.length === 0 ? (
+            <p className="empty-message">No upcoming bookings</p>
+          ) : (
+            upcoming.map((booking) => (
+              <div key={booking.id} className="booking-item">
+                <div className="booking-header">
+                  <span className="booking-name">#{booking.id} - {booking.name}</span>
+                  <span className="status-badge upcoming">UPCOMING</span>
+                </div>
+                <div className="booking-details">
+                  <div>
+                    {booking.date} {booking.start_time} – {booking.end_time}
+                    {getEndDateDisplay(booking)}
+                  </div>
+                  <div>{booking.address}</div>
+                  <div>₱{booking.total_price}</div>
+                </div>
+                <div className="booking-actions">
+                  <button 
+                    className="action-btn reschedule"
+                    onClick={() => handleRescheduleClick(booking)}
+                  >
+                    🔄 Reschedule
+                  </button>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+      </div>
+
+      {rescheduleBooking && (
+        <RescheduleModal
+          booking={rescheduleBooking}
+          onClose={() => setRescheduleBooking(null)}
+          onReschedule={handleRescheduleConfirm}
+        />
+      )}
     </div>
   );
 }
 
-export default App;
+export default Dashboard;

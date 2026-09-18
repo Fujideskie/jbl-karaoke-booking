@@ -244,5 +244,79 @@ router.get('/:id', async (req, res) => {
     console.error('Error fetching booking:', error);
     res.status(500).json({ error: 'Failed to fetch booking' });
   }
+});// Reschedule booking
+router.patch('/:id/reschedule', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { date, start_time, end_time } = req.body;
+    
+    if (!date || !start_time || !end_time) {
+      return res.status(400).json({ error: 'Date, start time, and end time are required' });
+    }
+    
+    const db = getDb();
+    
+    // Get current booking
+    const bookingResult = await db.query(
+      'SELECT * FROM bookings WHERE id = $1',
+      [id]
+    );
+    
+    if (bookingResult.rows.length === 0) {
+      return res.status(404).json({ error: 'Booking not found' });
+    }
+    
+    const booking = bookingResult.rows[0];
+    
+    // Check if booking is completed or cancelled
+    if (booking.status === 'completed') {
+      return res.status(400).json({ error: 'Cannot reschedule completed booking' });
+    }
+    
+    if (booking.status === 'cancelled') {
+      return res.status(400).json({ error: 'Cannot reschedule cancelled booking' });
+    }
+    
+    // Check if new date is available (excluding current booking)
+    const dateAvailable = await isDateAvailable(date, parseInt(id));
+    if (!dateAvailable) {
+      return res.status(409).json({ 
+        error: 'This date is already booked. Please choose another date.' 
+      });
+    }
+    
+    // Check if new time slot is available
+    const slotAvailable = await isSlotAvailable(date, start_time, end_time, parseInt(id));
+    if (!slotAvailable) {
+      return res.status(409).json({ 
+        error: 'Time slot is already booked. Please choose another time.' 
+      });
+    }
+    
+    // Update booking
+    await db.query(
+      `UPDATE bookings 
+       SET date = $1, start_time = $2, end_time = $3 
+       WHERE id = $4`,
+      [date, start_time, end_time, id]
+    );
+    
+    // Create notification
+    const message = `🔄 Booking rescheduled: ${booking.name} from ${booking.date} to ${date}`;
+    await db.query(
+      'INSERT INTO notifications (booking_id, type, message) VALUES ($1, $2, $3)',
+      [booking.id, 'booking_rescheduled', message]
+    );
+    
+    const updatedResult = await db.query(
+      'SELECT * FROM bookings WHERE id = $1',
+      [id]
+    );
+    
+    res.json(updatedResult.rows[0]);
+  } catch (error) {
+    console.error('Error rescheduling booking:', error);
+    res.status(500).json({ error: 'Failed to reschedule booking' });
+  }
 });
 export default router;
