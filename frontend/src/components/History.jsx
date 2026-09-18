@@ -70,16 +70,16 @@ function History() {
             return (
               <div key={booking.id} className="history-item">
                 <div className="history-item-header">
-                  <span className="history-name">{booking.name}</span>
+                  <span className="history-name">#{booking.id} - {booking.name}</span>
                   <span className="history-date">{formatDate(booking.date)}</span>
                 </div>
                 <div className="history-details">
-                <div>
-  {booking.start_time} – {booking.end_time}
-  {endDate && (
-    <span className="end-date"> (ends {formatShortDate(endDate.toISOString().split('T')[0])})</span>
-  )}
-</div>
+                  <div>
+                    {booking.start_time} – {booking.end_time}
+                    {endDate && (
+                      <span className="end-date"> (ends {formatShortDate(endDate.toISOString().split('T')[0])})</span>
+                    )}
+                  </div>
                   <div>{booking.address}</div>
                   <div>₱{booking.total_price}</div>
                   {booking.notes && (

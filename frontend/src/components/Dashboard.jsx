@@ -18,12 +18,11 @@ function Dashboard({ dashboardData, onRefresh }) {
   };
 
   const getEndDateDisplay = (booking) => {
-  // Always show end date if it exists
-  if (booking.end_date) {
-    return ` (ends ${formatDate(booking.end_date)})`;
-  }
-  return '';
-};
+    if (booking.end_date && booking.end_date !== booking.date) {
+      return ` (ends ${formatDate(booking.end_date)})`;
+    }
+    return '';
+  };
 
   return (
     <div className="dashboard">
@@ -68,7 +67,7 @@ function Dashboard({ dashboardData, onRefresh }) {
             today.map((booking) => (
               <div key={booking.id} className="booking-item">
                 <div className="booking-header">
-                  <span className="booking-name">{booking.name}</span>
+                  <span className="booking-name">#{booking.id} - {booking.name}</span>
                   <span className="status-badge active">ACTIVE</span>
                 </div>
                 <div className="booking-details">
@@ -92,7 +91,7 @@ function Dashboard({ dashboardData, onRefresh }) {
             tomorrow.map((booking) => (
               <div key={booking.id} className="booking-item">
                 <div className="booking-header">
-                  <span className="booking-name">{booking.name}</span>
+                  <span className="booking-name">#{booking.id} - {booking.name}</span>
                   <span className="status-badge upcoming">UPCOMING</span>
                 </div>
                 <div className="booking-details">
@@ -116,7 +115,7 @@ function Dashboard({ dashboardData, onRefresh }) {
             upcoming.map((booking) => (
               <div key={booking.id} className="booking-item">
                 <div className="booking-header">
-                  <span className="booking-name">{booking.name}</span>
+                  <span className="booking-name">#{booking.id} - {booking.name}</span>
                   <span className="status-badge upcoming">UPCOMING</span>
                 </div>
                 <div className="booking-details">
