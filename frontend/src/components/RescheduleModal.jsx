@@ -31,20 +31,25 @@ function RescheduleModal({ booking, onClose, onReschedule }) {
   return (
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+        {/* Header */}
         <div className="modal-header">
           <h3>🔄 Reschedule Booking</h3>
           <button className="modal-close" onClick={onClose}>✕</button>
         </div>
 
+        {/* Booking Info */}
         <div className="modal-booking-info">
-          <div><strong>#{booking.id} - {booking.name}</strong></div>
-          <div>Current: {booking.date} | {booking.start_time} - {booking.end_time}</div>
+          <div className="modal-info-name">#{booking.id} - {booking.name}</div>
+          <div className="modal-info-current">
+            Current: {booking.date} | {booking.start_time} - {booking.end_time}
+          </div>
         </div>
 
         {error && <div className="modal-error">{error}</div>}
 
-        <form onSubmit={handleSubmit}>
-          <div className="form-group">
+        {/* Form */}
+        <form onSubmit={handleSubmit} className="modal-form">
+          <div className="modal-form-group">
             <label>New Date *</label>
             <input
               type="date"
@@ -55,8 +60,8 @@ function RescheduleModal({ booking, onClose, onReschedule }) {
             />
           </div>
 
-          <div className="form-row">
-            <div className="form-group">
+          <div className="modal-form-row">
+            <div className="modal-form-group">
               <label>Start Time *</label>
               <input
                 type="time"
@@ -66,7 +71,7 @@ function RescheduleModal({ booking, onClose, onReschedule }) {
               />
             </div>
 
-            <div className="form-group">
+            <div className="modal-form-group">
               <label>End Time *</label>
               <input
                 type="time"
@@ -78,10 +83,10 @@ function RescheduleModal({ booking, onClose, onReschedule }) {
           </div>
 
           <div className="modal-actions">
-            <button type="button" className="modal-btn cancel" onClick={onClose}>
+            <button type="button" className="modal-btn modal-btn-cancel" onClick={onClose}>
               Cancel
             </button>
-            <button type="submit" className="modal-btn confirm" disabled={loading}>
+            <button type="submit" className="modal-btn modal-btn-confirm" disabled={loading}>
               {loading ? 'Rescheduling...' : 'Reschedule'}
             </button>
           </div>
