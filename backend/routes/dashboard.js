@@ -163,19 +163,27 @@ router.get('/stats', async (req, res) => {
       }));
     };
     
-    const totalResult = await db.query('SELECT COUNT(*) as count FROM bookings');
+    // ✅ TOTAL BOOKINGS - EXCLUDE cancelled
+    const totalResult = await db.query(
+      `SELECT COUNT(*) as count FROM bookings WHERE status != 'cancelled'`
+    );
     const totalBookings = parseInt(totalResult.rows[0].count) || 0;
     
+    // ✅ THIS MONTH INCOME - EXCLUDE cancelled
     const monthlyResult = await db.query(
       `SELECT COALESCE(SUM(total_price), 0) as total 
        FROM bookings 
-       WHERE date LIKE $1`,
+       WHERE date LIKE $1
+       AND status != 'cancelled'`,
       [`${currentMonth}%`]
     );
     const monthlyIncome = parseFloat(monthlyResult.rows[0].total) || 0;
     
+    // ✅ TOTAL INCOME - EXCLUDE cancelled
     const totalIncomeResult = await db.query(
-      `SELECT COALESCE(SUM(total_price), 0) as total FROM bookings`
+      `SELECT COALESCE(SUM(total_price), 0) as total 
+       FROM bookings 
+       WHERE status != 'cancelled'`
     );
     const totalIncome = parseFloat(totalIncomeResult.rows[0].total) || 0;
     
