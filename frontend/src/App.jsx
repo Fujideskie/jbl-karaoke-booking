@@ -4,6 +4,7 @@ import Dashboard from './components/Dashboard';
 import History from './components/History';
 import NotificationBell from './components/NotificationBell';
 import Calendar from './components/Calendar';
+import CancelBooking from './components/CancelBooking';
 import './App.css';
 
 function App() {
@@ -86,6 +87,12 @@ function App() {
               >
                 Calendar
               </button>
+              <button 
+                className={`nav-tab ${activeTab === 'cancel' ? 'active' : ''}`}
+                onClick={() => setActiveTab('cancel')}
+              >
+                Cancel
+              </button>
             </nav>
             <NotificationBell />
           </div>
@@ -102,6 +109,7 @@ function App() {
         )}
         {activeTab === 'history' && <History />}
         {activeTab === 'calendar' && <Calendar />}
+        {activeTab === 'cancel' && <CancelBooking />}
       </main>
 
       <footer className="footer">

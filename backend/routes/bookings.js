@@ -182,5 +182,67 @@ router.get('/available-dates', async (req, res) => {
     res.status(500).json({ error: 'Failed to fetch available dates' });
   }
 });
+// Cancel booking by customer (using reference ID)
+router.post('/cancel/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const db = getDb();
+    
+    const bookingResult = await db.query(
+      'SELECT * FROM bookings WHERE id = $1',
+      [id]
+    );
+    
+    if (bookingResult.rows.length === 0) {
+      return res.status(404).json({ error: 'Booking not found' });
+    }
+    
+    const booking = bookingResult.rows[0];
+    
+    // Check if booking is already completed
+    if (booking.status === 'completed') {
+      return res.status(400).json({ error: 'Cannot cancel completed booking' });
+    }
+    
+    // Update status to cancelled
+    await db.query(
+      'UPDATE bookings SET status = $1 WHERE id = $2',
+      ['cancelled', id]
+    );
+    
+    // Create notification
+    const message = `❌ Booking cancelled: ${booking.name} on ${booking.date}`;
+    await db.query(
+      'INSERT INTO notifications (booking_id, type, message) VALUES ($1, $2, $3)',
+      [booking.id, 'booking_cancelled', message]
+    );
+    
+    res.json({ success: true, message: 'Booking cancelled successfully!' });
+  } catch (error) {
+    console.error('Error cancelling booking:', error);
+    res.status(500).json({ error: 'Failed to cancel booking' });
+  }
+});
 
+// Get booking by ID (for customer)
+router.get('/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const db = getDb();
+    
+    const result = await db.query(
+      'SELECT * FROM bookings WHERE id = $1',
+      [id]
+    );
+    
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Booking not found' });
+    }
+    
+    res.json(result.rows[0]);
+  } catch (error) {
+    console.error('Error fetching booking:', error);
+    res.status(500).json({ error: 'Failed to fetch booking' });
+  }
+});
 export default router;
