@@ -3,7 +3,7 @@ import { getDb } from '../database.js';
 
 const router = express.Router();
 
-// Get all completed bookings (history)
+// Get all completed bookings (history) - EXCLUDE cancelled
 router.get('/', async (req, res) => {
   try {
     const db = getDb();

@@ -53,7 +53,7 @@ router.get('/stats', async (req, res) => {
     const currentTime = now.toTimeString().slice(0, 5);
     const currentMonth = today.substring(0, 7);
     
-    // Get all confirmed bookings
+    // Get all confirmed bookings (EXCLUDE cancelled)
     const confirmedResult = await db.query(
       `SELECT * FROM bookings WHERE status = 'confirmed'`
     );
@@ -96,7 +96,7 @@ router.get('/stats', async (req, res) => {
       }
     }
     
-    // Today's active bookings
+    // Today's active bookings (EXCLUDE cancelled)
     const todayResult = await db.query(
       `SELECT * FROM bookings 
        WHERE date = $1 
@@ -133,7 +133,7 @@ router.get('/stats', async (req, res) => {
       }
     }
     
-    // Tomorrow's bookings
+    // Tomorrow's bookings (EXCLUDE cancelled)
     const tomorrow = new Date(Date.now() + 86400000).toISOString().split('T')[0];
     const tomorrowResult = await db.query(
       `SELECT * FROM bookings 
@@ -144,7 +144,7 @@ router.get('/stats', async (req, res) => {
     );
     const tomorrowBookings = tomorrowResult.rows;
     
-    // Upcoming bookings
+    // Upcoming bookings (EXCLUDE cancelled)
     const upcomingResult = await db.query(
       `SELECT * FROM bookings 
        WHERE date > $1 
