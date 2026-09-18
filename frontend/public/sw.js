@@ -1,7 +1,5 @@
-const CACHE_NAME = 'jbl-karaoke-v2';
+const CACHE_NAME = 'jbl-karaoke-v3'; // Change version number
 const urlsToCache = [
-  '/',
-  '/index.html',
   '/manifest.json'
 ];
 
@@ -17,20 +15,56 @@ self.addEventListener('install', (event) => {
   self.skipWaiting();
 });
 
-// Fetch from cache
+// Fetch - Network first, cache fallback
 self.addEventListener('fetch', (event) => {
+  // Skip API requests
+  if (event.request.url.includes('/api/')) {
+    return;
+  }
+
+  // Skip non-GET requests
+  if (event.request.method !== 'GET') {
+    return;
+  }
+
+  // Network first for HTML
+  if (event.request.headers.get('accept')?.includes('text/html')) {
+    event.respondWith(
+      fetch(event.request)
+        .then((response) => {
+          // Clone the response
+          const responseClone = response.clone();
+          caches.open(CACHE_NAME).then((cache) => {
+            cache.put(event.request, responseClone);
+          });
+          return response;
+        })
+        .catch(() => {
+          return caches.match(event.request);
+        })
+    );
+    return;
+  }
+
+  // Cache first for assets
   event.respondWith(
     caches.match(event.request)
       .then((response) => {
         if (response) {
           return response;
         }
-        return fetch(event.request);
+        return fetch(event.request).then((response) => {
+          const responseClone = response.clone();
+          caches.open(CACHE_NAME).then((cache) => {
+            cache.put(event.request, responseClone);
+          });
+          return response;
+        });
       })
   );
 });
 
-// Activate service worker
+// Activate - delete old caches
 self.addEventListener('activate', (event) => {
   const cacheWhitelist = [CACHE_NAME];
   event.waitUntil(
@@ -38,6 +72,7 @@ self.addEventListener('activate', (event) => {
       return Promise.all(
         cacheNames.map((cacheName) => {
           if (cacheWhitelist.indexOf(cacheName) === -1) {
+            console.log('Deleting old cache:', cacheName);
             return caches.delete(cacheName);
           }
         })
@@ -47,7 +82,7 @@ self.addEventListener('activate', (event) => {
   self.clients.claim();
 });
 
-// 🔔 PUSH NOTIFICATION HANDLER
+// Push notification handler
 self.addEventListener('push', (event) => {
   console.log('Push notification received:', event);
   
